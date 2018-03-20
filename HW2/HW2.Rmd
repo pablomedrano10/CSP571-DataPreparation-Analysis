@@ -1,0 +1,207 @@
+---
+title: "HW2"
+author: "Pablo Medrano"
+date: "25/2/2018"
+output: html_document
+---
+
+##CHAPTER 3
+##PROBLEM 1
+The null hypothesis is that the advertising budget of TV, radio or newspaper does not affect the sales.
+In terms of coefficients it means that H0: β1 = 0 or H0: β2 = 0 or H0: β3 = 0.
+Looking at the p-values, the null hypothesis can be rejected for the TV and radio budgets since their p-values are small enough. It is not the case for the radio budget since its p-value is high.
+
+##PROBLEM 3
+The least squares model is:
+y = 50 + 20GPA + 0.07IQ+ 35Gender + 0.01GPA*IQ - 10GPA*Gender
+for males where Gender = 0 it is:
+y = 50 + 20GPA + 0.07IQ + 0.01GPA*IQ
+and for females where Gender = 1 it is:
+y = 85 + 10GPA + 0.07IQ + 0.01GPA*IQ
+
+a)
+So for a fixed value of IQ and GPA the starting salary for males will be higher if:
+50 + 20GPA >= 85 + 10GPA
+Operating we get that the starting salary for males for a fixed value of IQ ad GPA will be higher if GPA >= 3.5 so
+the right answer is iii: For a fixed value of IQ and GPA, males earn more on average than females provided that the GPA is high enough.
+
+b)
+plugging the values in the model for females we get:
+y = 85 + 10*4.0 + 0.07*110 + 0.01*4.0*110 = 137100$
+
+c)
+Completely false. The value of the coefficients has nothing to do with the importance of the interaction. This is measured by the p-value and if its value is small enough to reject the null hypothesis H0: β4 = 0 of the interaction between GPA and IQ
+
+##PROBLEM 4
+a)
+The RSS for the linear regression should be lower since the true relationship is linear this model will adjust better to the data. Although it may be the case that the cubic regression overfits the training data and it will end having a lower RSS.
+b)
+The test RSS will be more likely lower for the linear regression since the true relationship is linear as it was said in the previous question. Furthermore if the cubic model overfitted the training data its test RSS should be even higher.
+c)
+The training RSS will be lower for the cubic model because it is more flexible and the true relationship is not linear.
+d)
+The test RSS should be lower if the true relationship is far away from linear but since we don't know how far it is from being linear it may be the case that the test RSS is lower for the linear model if the true relationship is closer to be linear than cubic
+
+##CHAPTER 4
+##PROBLEM 4
+a)
+We will use 10% of the points
+b)
+We will use 0.1*0.1 = 0.001 so we will a 1%
+c)
+We will use (0.1^100)*100%
+d)
+As we see in the previous question when p is large the percentage of points used is really small: (0.1^p)*100% in this example and that is why KNN performs poorly when p is large
+e)
+When p = 1: l = 0.1
+When p = 2: l = 0.1^0.5
+When p = 100: l = 0.1^(1/100)
+
+##PROBLEM 6
+a)
+We can get this porbability plugging values in the logistic regression equation:
+p(X) = exp(-6+0.05*40+1*3.5)/(1+exp(-6+0.05*40+1*3.5)) = 0.3775
+b)
+We have to solve the logistic regression equation for X1:
+exp(-6+0.05*X1+1*3.5)/(1+exp(-6+0.05*X1+1*3.5)) = 0.5
+The result is X1 = 50
+
+##PROBLEM 7
+We can get this probability plugging the values in the equation for pk(x):
+p1(4) = 0.8*exp(-(1/72)*(4-10)^2)/(0.8*exp(-(1/72)*(4-10)^2)+0.2*exp(-(1/72)*(4-0)^2)) = 0.752
+
+##PROBLEM 9
+a)
+p(x)/(1-p(x)) = 0.37
+Solving for p(x): p(x) = 0.27 so 27% of people defaulting
+b)
+p(x) = 0.16
+The odds will be:
+0.16/(1-0.16) = 0.19
+
+##PRACTICUM PROBLEMS
+##PROBLEM 1
+```{r}
+library(MASS)
+#View(Boston)
+reg_model <- lm(medv ~ lstat, data = Boston)
+plot(Boston$lstat, Boston$medv)
+par(mfrow = c(2, 2))
+plot(reg_model)
+```
+There is possibly a non-linear relationship because there is a pattern in the plot of fitted values vs residuals
+
+```{r}
+predict(reg_model, data.frame(lstat=c(5,10,15)), interval = "confidence")
+```
+
+```{r}
+predict(reg_model, data.frame(lstat=c(5,10,15)), interval = "prediction")
+```
+They are different because they refer to different things. The confidence interval tells you how well you have determined the true population parameter. The prediction interval is where the predicted value from a sample should be in so it doesn't deal with the true population but with the sample.
+
+```{r}
+reg_model2 <- lm(medv ~ lstat+I(lstat^2), data = Boston)
+summary(reg_model)
+summary(reg_model2)
+```
+The R squared for the linear model is 0.5432 and the one for the non-linear model is 0.6393
+
+```{r}
+library(ggplot2)
+ggplot(Boston, aes(x = lstat, y = medv)) + geom_point(shape = 1)  + geom_smooth(method = lm)
+ggplot(Boston, aes(x = lstat + I(lstat^2), y = medv)) + geom_point(shape = 1)  + geom_smooth(method = loess)
+```
+
+##PROBLEM 2
+```{r}
+library(caret)
+library(glmnet)
+library(corrplot)
+library(pROC)
+set.seed(1)
+
+abalone <-  read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data" , sep="," , header=F, stringsAsFactors = T)
+
+abalone_MF <-  abalone[abalone$V1 != 'I',]
+abalone_MF$V1 <- factor(abalone_MF$V1)
+train <-  createDataPartition(abalone_MF$V1, p = 0.8, list = FALSE)
+abalone_train <-  abalone_MF[train,]
+abalone_test <-  abalone_MF[-train,]
+
+log_model <- glm(V1 ~., data = abalone_train, family = binomial)
+summary(log_model)
+```
+The smallest p-value is the one associated with the predictor V6 so that one is most relevant. Then the V4 predictor is relatively small as well so we could include it as relevant.
+
+```{r}
+confint(log_model)
+```
+
+All the predictors contain 0 in the range but the V6 predictor. We can reject the null hypothesis for the predictor V6 but not for the other ones
+
+```{r}
+log.probs <- predict(log_model, newdata = abalone_test, type = 'response')
+dim(abalone_test)
+log.pred <- rep("F", 566)
+log.pred[log.probs > 0.5] <- "M"
+confusionMatrix(log.pred, abalone_test$V1)
+```
+
+```{r}
+plot(roc(abalone_test$V1, log.probs))
+```
+
+A random classifier would have an accuracy of 0.5 and in this model we get an accuracy of 0.5654 which is slightly better.
+
+```{r}
+corrplot(cor(abalone_train[, 2:8]), method = "number")
+```
+The predictors are high correlated to each other so most of them won't be useful to increase the variance explained by the model. Since the predictors are correlated they don't contribute with more information to the model and the model doesn't have a good performance.
+
+##PROBLEM 3
+```{r}
+library(e1071)
+mushroom <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data", sep=",", header=F, stringsAsFactors = T)
+miss <-  which(mushroom$V12 == '?')
+mushroom_miss <- mushroom[-c(miss), ]
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+mode <- getmode(mushroom_miss$V12)
+mushroom_mode <- mushroom
+mushroom_mode$V12[miss] <- mode
+```
+I have created two datasets, in the first one I have erased all the rows that had a ? value. In the other one I have replace de ? values for the mode value of the predictor.
+I will compare how these two models perform.
+
+```{r}
+set.seed(1)
+train <- sample(1:nrow(mushroom), size=0.8*nrow(mushroom))
+mushroom_miss_train <- mushroom_miss[train, ]
+mushroom_miss_test <- mushroom_miss[-train, ]
+mushroom_mode_train <- mushroom_mode[train, ]
+mushroom_mode_test <- mushroom_mode[-train, ]
+
+mushroom_miss.bayes <- naiveBayes(mushroom_miss_train$V1~., data = mushroom_miss_train)
+mushroom_mode.bayes <- naiveBayes(mushroom_mode_train$V1~., data = mushroom_mode_train)
+
+pred_mushroom_miss_train <- predict(mushroom_miss.bayes, mushroom_miss_train)
+pred_mushroom_miss_test <- predict(mushroom_miss.bayes, mushroom_miss_test)
+
+pred_mushroom_mode_train <- predict(mushroom_mode.bayes, mushroom_mode_train)
+pred_mushroom_mode_test <- predict(mushroom_mode.bayes, mushroom_mode_test)
+
+table(pred_mushroom_miss_train, mushroom_miss_train$V1)
+table(pred_mushroom_miss_test, mushroom_miss_test$V1)
+
+table(pred_mushroom_mode_train, mushroom_mode_train$V1)
+table(pred_mushroom_mode_test, mushroom_mode_test$V1)
+```
+These four confusion matrice are for the two models and the train and test sets.
+The train set in which I erased the ? values has 188 false positives and its accuracy is 0.9558
+The test set for the same case has 40 false positives and an accuracy of 0.9617 as well.
+The train set in which I replaced the ? values for the mode of the predictor has 358 false positives and an accuracy of 0.9406.
+The test set for this case has 78 false positives and an accuracy of 0.9471.
+Both cases perform very similar. The one in wich I removed the ? values instead of replacing them performs a little better.

@@ -1,0 +1,121 @@
+---
+title: "hw1"
+author: "Pablo Medrano"
+date: "25/1/2018"
+output: html_document
+---
+##RECITATION PROBLEMS CHAPTER 2
+1.
+a) A flexible method will fit make a closer fit of the data and will perform better on a large dataset.
+
+b) A flexible method would overfit the data because the number of observations is small.
+
+c) In this case, a flexible method will perform better because it has more degrees of freedom and will fit better a highly non-linear dataset.
+
+d) A flexible method will perform worse because it will be more affected by the noise and it will affect the fit.
+
+2.
+a) Regression and inference. N = 500 and p = 3.
+
+b) Classification and prediction. N = 20 and p = 13.
+
+c)  Regression and prediction. N = 52 and p = 13.
+
+4.
+a)
+Classification 1: Is a stock price going to increase or decrease. Response: increase/decrease. Predictors: other stock prices, politics realated to the products the company sells, politics in countries where the company operates, other countries stock markets,... Goal: prediction
+
+Classification 2: Is a student going to be successfull in a Master's degree or not. Response: success/failure. Predictors: what was his bachelor's degree mayor, what is the master's degree mayor, GPA, GRE scores, country of origin, ... Goal: inference
+
+Classification 3: Is a football team going to get in the playoffs. Response: yes/no. Predictors: last season statistics such as offensive yards per game, yards allow per game, ... Same statistics for teams they are going to play against. New players, ... Goal: prediction
+
+b)
+Regression 1: predict the exact result of soccer game. Response: result of the game. Predictors: all possible statistics for both teams and its players. Goal: prediction
+
+Regression 2: predict how tall a person is going to be. Response: height. Predictors: information about its genes, family tree, nationality, environment, ... Goal: inference
+
+Regression 3: predict the monthly sales of a cell phone. Response: number of cell phone sold. Predictors: money spent on marketing, other cell phones prices and time in the market, time the own cell phone has been in the market, stores special discounts, ... Goal: prediction
+
+c)
+Cluster 1: teenagers trending TV series. Response: a teenager falls into a group depending on what he or she watches. Predictors: Age, location, family income, gender, ... Goal: prediction
+
+Cluster 2: holiday destinations. Response: people get in cluster depending on where they go on vacation. Predictors: income, location, places visited before, where family members live, .... Goal: inference
+
+Cluster 3: clubs people go out to at night. Response: people goes in a group depending where they usually go out to. Predictors: age, income, location, race, music, .... Goal: inference
+
+
+6.
+A parametric approach consists on estimating the function f by estimating a set of parameters. It assumes a form for f.
+A non-parametric approach does not assume a particular form for f so it is not estimated by estimating a set of parameters. This requires a larger sample of data to correctly estimate f.
+
+The advantages of a parametric approach are simplifying the model of f to some parameters and so less observations are required compared to a non-parametric approach.
+The disadvantages are an inaccurate estimate of f if its assumed form is incorrect. This can be because the data is overfitted if a too flexible model is used or not enough well fitted if data has more variance and the model is not flexible enough.
+
+
+##PROBLEM 1
+```{r}
+library(tidyverse)
+library(datasets)
+
+boxplot(iris[,1:4])
+
+ggplot(data = iris) + geom_boxplot(mapping = aes(x = Species , y = Sepal.Length, fill = Species))
+ggplot(data = iris) + geom_boxplot(mapping = aes(x = Species , y = Sepal.Width, fill = Species))
+ggplot(data = iris) + geom_boxplot(mapping = aes(x = Species , y = Petal.Length, fill = Species))
+ggplot(data = iris) + geom_boxplot(mapping = aes(x = Species , y = Petal.Width, fill = Species))
+
+IQR(iris$Sepal.Length)
+IQR(iris$Sepal.Width)
+IQR(iris$Petal.Length)
+IQR(iris$Petal.Width)
+
+sd(iris$Sepal.Length)
+sd(iris$Sepal.Width)
+sd(iris$Petal.Length)
+sd(iris$Petal.Width)
+
+ggplot(data = iris) + geom_boxplot(mapping = aes(x = Species , y = Petal.Length/Petal.Width, fill = Species))
+```
+The results almost agree with the empirical values. The second and third values are the smallest and biggest IQR and also the smallest and biggest standard deviation. But the first IQR is smaller than the fourth and it has a bigger standard deviation.
+
+The flower type that exhibits a different petal length/width is the setosa.
+
+##PROBLEM 2
+```{r}
+#View(trees)
+library(moments)
+summary(trees$Girth)
+summary(trees$Height)
+summary(trees$Volume)
+
+hist(trees$Girth)
+hist(trees$Height)
+hist(trees$Volume)
+
+skewness(trees$Girth)
+skewness(trees$Height)
+skewness(trees$Volume)
+```
+
+The one that could be kind of similar to a normal distribution is the Height.
+Girth and Volume, have positive skewness and Height a little bit of negative skewness.
+Yes, the values agrees with the visual inspection.
+
+
+
+##PROBLEM 3
+```{r}
+auto <-  read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data", sep="", header=F, stringsAsFactors = T)
+auto$V4[auto$V4 == "?"] <- NA
+auto$V4 <- as.numeric(auto$V4)
+mean_NA <- mean(auto$V4, na.rm = T)
+mean_NA
+medianV4 <- median(auto$V4, na.rm = T)
+medianV4
+auto$V4[is.na(auto$V4)] <- medianV4
+#View(auto)
+mean <- mean(auto$V4)
+mean
+```
+
+The original mean value when there were NA values was 52.16071 and the new mean value when NA values are substitued with the median is 52.30905. It only changes 0.28%
