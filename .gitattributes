@@ -1,2 +1,2 @@
 * linguist-vendored
-*.RTF linguist-vendored=false
+*.rtf	 diff=astextplain
