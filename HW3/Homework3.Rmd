@@ -1,0 +1,370 @@
+---
+title: "Homework3"
+author: "Pablo Medrano"
+date: "2/4/2018"
+output: html_document
+---
+##RECITATION PROBLEMS
+##CHAPTER 5
+##PROBLEM 2
+a) 1-1/n
+b) 1-1/n
+c) Since bootstrap samples with replacement: (1-1/n)*(1-1/n)*...*(1-1/n) = (1-1/n)^n
+d) 1-(1-1/5)^5 = 0.672
+e) 1-(1-1/100)^100 = 0.634
+f) 1-(1-1/10000)^10000 = 0.632
+g)
+```{r}
+x <- 1:100000
+plot(x, 1 - (1 - 1/x)^x)
+```
+
+We can see the values quickly follow an asymptote close to the value 0.632, same as we saw in the numbers of the previous questions.
+
+h)
+```{r}
+set.seed(1)
+bootstrap <- rep(NA, 10000)
+for (i in 1:10000) {
+    bootstrap[i] <- sum(sample(1:100, rep = TRUE) == 4) > 0
+}
+mean(bootstrap)
+```
+We obtain a value close to the asymptote we saw.
+
+##PROBLEM 3
+a) The k-fold cross-validation is implemented by getting n observations and randomly splitting them into k non-overlapping groups of approximately the same size. These groups are going to be our validation set. The rest of the observations are our training set. The test error is the average of the k MSE estimates of the validation set.
+
+b) 
+b.1) The validation estimate of the test error is more stable in k-fold cross-validation since it is averaging over several MSE and in the validation set it is just one and it depends on the observations used for the validation set.
+Also the k-fold cross-validation is trained on more observations so it will be more accurate.
+b.2) LOOCV is computationally more expensive than k-fold since you have to fit n models instead of k. Besides considering the bias-variance trade-off, LOOCV will have more variance because the most flexible method in cross-validation (k=n) and that could be a problem in some cases.
+
+##CHAPTER 6
+##PROBLEM 1
+a) Best subset is the one with the smallest training RSS since it considers all the possible solutions with k predictors and chooses the best one.
+b) It will depend on the test data. Best subset picks the best model but it may be the case that the model of the backward or stepwise selection fits better the test data and results in a smaller test RSS
+c)
+c.1) True. The model with k+1 predictors is obtained adding one predictor to the model with k predictors.
+c.2) True. The model with k predictors is obtained removing one predictor of the model with k+1 predictors.
+c.3) False. The models obtained by stepwise and backward selection have no relationship between each other.
+c.4) False. Same reason as the previous one.
+c.5) False. The model for k+1 predictors is obtained from all the possibles with that number of predictors but it doesn't have to have the k predictors from the best model with k predictors.
+
+##PROBLEM 2
+a) Less flexible and hence will give improved prediction accu- racy when its increase in bias is less than its decrease in variance.
+b) Less flexible and hence will give improved prediction accu- racy when its increase in bias is less than its decrease in variance.
+c) More flexible and hence will give improved prediction accu- racy when its increase in variance is less than its decrease in bias.
+
+##PROBLEM 3
+a) Steadily decrease.
+b) Decrease initially, and then eventually start increasing in a U shape.
+c) Steadily increase.
+d) Steadily decrease.
+e) Remain constant.
+
+##PROBLEM 4
+a) Steadily increase.
+b) Decrease initially, and then eventually start increasing in a U shape.
+c) Steadily decrease.
+d) Steadily increase.
+e) Remain constant.
+
+
+##PRACTICUM PROBLEMS
+
+```{r}
+rss <- function(label, data){
+    return (sum((label - data)^2))
+}
+tss <- function(label){
+    return (sum((label - mean(label))^2))
+}
+r2 <- function(label, data){
+    return(1-(rss(label, data)/tss(label)))
+}
+```
+
+##PROBLEM 1
+```{r}
+library(caret)
+library(glmnet)
+library(Metrics)
+```
+
+
+```{r}
+hydrodinamics.data <- read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/00243/yacht_hydrodynamics.data" , sep=" ", header=F, stringsAsFactors = T)
+colnames(hydrodinamics.data) <- c("Longitudinal_position_of_the_center_of_buoyancy", "Prismatic_coefficient", "Length_displacement_ratio", "Beam_draught_ratio", "Length_beam_ratio", "Froude_number", "Residuary_resistance_per_unit_weight_of_displacement")
+```
+
+Since the data has a lot of NA values I am going to take to approaches to it.
+First, I will replace the NA values for the median of each variable and fit a model.
+Second, as the response itself has some NA values and those observations happen to have only the value for the Longitudinal position of the center of buoyancy and the values for the rest of the variables are NA, I am going to delete those observations and fit a new model. There are still some NA values in other observations that will be replace with the median values again but in this case it is only for the Prismatic coefficient predictor and less observations.
+```{r}
+median1 <- median(hydrodinamics.data$Longitudinal_position_of_the_center_of_buoyancy, na.rm = TRUE)
+median2 <- median(hydrodinamics.data$Prismatic_coefficient, na.rm = TRUE)
+median3 <- median(hydrodinamics.data$Length_displacement_ratio, na.rm = TRUE)
+median4 <- median(hydrodinamics.data$Beam_draught_ratio, na.rm = TRUE)
+median5 <- median(hydrodinamics.data$Length_beam_ratio, na.rm = TRUE)
+median6 <- median(hydrodinamics.data$Froude_number, na.rm = TRUE)
+median7 <- median(hydrodinamics.data$Residuary_resistance_per_unit_weight_of_displacement, na.rm = TRUE)
+
+hydrodinamics.data$Longitudinal_position_of_the_center_of_buoyancy[is.na(hydrodinamics.data$Longitudinal_position_of_the_center_of_buoyancy)] <- median1
+hydrodinamics.data$Prismatic_coefficient[is.na(hydrodinamics.data$Prismatic_coefficient)] <- median2
+hydrodinamics.data$Length_displacement_ratio[is.na(hydrodinamics.data$Length_displacement_ratio)] <- median3
+hydrodinamics.data$Beam_draught_ratio[is.na(hydrodinamics.data$Beam_draught_ratio)] <- median4
+hydrodinamics.data$Length_beam_ratio[is.na(hydrodinamics.data$Length_beam_ratio)] <- median5
+hydrodinamics.data$Froude_number[is.na(hydrodinamics.data$Froude_number)] <- median6
+hydrodinamics.data$Residuary_resistance_per_unit_weight_of_displacement[is.na(hydrodinamics.data$Residuary_resistance_per_unit_weight_of_displacement)] <- median7
+```
+
+```{r}
+set.seed(1)
+
+train <- createDataPartition(hydrodinamics.data$Residuary_resistance_per_unit_weight_of_displacement, p = 0.8, list = FALSE)
+hydrodinamics.train <- hydrodinamics.data[train, ]
+hydrodinamics.test <- hydrodinamics.data[-train, ]
+
+hydrodinamics.fit <- lm(hydrodinamics.train$Residuary_resistance_per_unit_weight_of_displacement~., data = hydrodinamics.train)
+summary(hydrodinamics.fit)
+
+train.predict <- predict(hydrodinamics.fit, newdata = hydrodinamics.train)
+
+test.predict <- predict(hydrodinamics.fit, newdata = hydrodinamics.test)
+
+cat("training MSE" , mse(hydrodinamics.train$Residuary_resistance_per_unit_weight_of_displacement, train.predict), "\n")
+cat("training RMSE" , rmse(hydrodinamics.train$Residuary_resistance_per_unit_weight_of_displacement, train.predict), "\n")
+cat("training R^2" , summary(hydrodinamics.fit)$r.squared, "\n")
+
+cat("test MSE" , mse(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, test.predict), "\n")
+cat("test RMSE" , rmse(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, test.predict), "\n")
+cat("test R^2" , r2(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, test.predict), "\n")
+```
+The test MSE and RMSE are lower than the training ones. Although this is rare it can happen.
+Both R squared are considerably low.
+
+Now I take the second approach deleting the observations that have NA in the response and filling the rest of NA values that happen to be only in the 'Prismatic coefficient' predictor with its median.
+```{r}
+hydrodinamics.data <- read.csv("http://archive.ics.uci.edu/ml/machine-learning-databases/00243/yacht_hydrodynamics.data" , sep=" ", header=F, stringsAsFactors = T)
+colnames(hydrodinamics.data) <- c("Longitudinal_position_of_the_center_of_buoyancy", "Prismatic_coefficient", "Length_displacement_ratio", "Beam_draught_ratio", "Length_beam_ratio", "Froude_number", "Residuary_resistance_per_unit_weight_of_displacement")
+```
+
+```{r}
+hydrodinamics.data <- hydrodinamics.data[!is.na(hydrodinamics.data$Residuary_resistance_per_unit_weight_of_displacement), ]
+median2 <- median(hydrodinamics.data$Prismatic_coefficient, na.rm = TRUE)
+hydrodinamics.data$Prismatic_coefficient[is.na(hydrodinamics.data$Prismatic_coefficient)] <- median2
+```
+
+
+```{r}
+set.seed(1)
+
+train <- createDataPartition(hydrodinamics.data$Residuary_resistance_per_unit_weight_of_displacement, p = 0.8, list = FALSE)
+hydrodinamics.train <- hydrodinamics.data[train, ]
+hydrodinamics.test <- hydrodinamics.data[-train, ]
+
+hydrodinamics.fit <- lm(hydrodinamics.train$Residuary_resistance_per_unit_weight_of_displacement~., data = hydrodinamics.train)
+summary(hydrodinamics.fit)
+
+train.predict <- predict(hydrodinamics.fit, newdata = hydrodinamics.train)
+
+test.predict <- predict(hydrodinamics.fit, newdata = hydrodinamics.test)
+
+cat("training MSE" , mse(hydrodinamics.train$Residuary_resistance_per_unit_weight_of_displacement, train.predict), "\n")
+cat("training RMSE" , rmse(hydrodinamics.train$Residuary_resistance_per_unit_weight_of_displacement, train.predict), "\n")
+cat("training adjusted R^2" , summary(hydrodinamics.fit)$r.squared, "\n")
+
+cat("test MSE" , mse(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, test.predict), "\n")
+cat("test RMSE" , rmse(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, test.predict), "\n")
+cat("test R^2" , r2(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, test.predict), "\n")
+```
+With this approach the training MSE and RMSE are lower than in the previous case but the test values are higher.
+The test R squared in this case is really low.
+
+
+Now let's perform the boostrap
+```{r}
+tc <- trainControl(method = "boot", number = 1000, p = .8)
+bootstrap.fit <- train(Residuary_resistance_per_unit_weight_of_displacement ~ ., data = hydrodinamics.train, trControl = tc, method = "lm")
+```
+
+In the next table we can see the RMSE and R^2 values for each resample
+```{r}
+bootstrap.fit$resample
+```
+
+And the MSE for each resample are
+```{r}
+(bootstrap.fit$resample$RMSE)^2
+```
+
+Now let's plot a histogram of the RMSE values and compute the a mean RMSE and R^2 for the fit
+```{r}
+hist(bootstrap.fit$resample$RMSE)
+cat("bootstrap mean MSE" , mean(bootstrap.fit$resample$RMSE)^2, "\n")
+cat("bootstrap mean RMSE" , mean(bootstrap.fit$resample$RMSE), "\n")
+cat("bootstrap mean R2" , mean(bootstrap.fit$resample$Rsquared), "\n")
+```
+The values are similar to the basic model, slighly lower.
+
+```{r}
+summary(bootstrap.fit$finalModel)
+```
+
+```{r}
+boot.predict <- predict(bootstrap.fit$finalModel, newdata = hydrodinamics.test)
+cat("test MSE" , mse(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, boot.predict), "\n")
+cat("test RMSE" , rmse(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, boot.predict), "\n")
+cat("test R^2" , r2(hydrodinamics.test$Residuary_resistance_per_unit_weight_of_displacement, boot.predict), "\n")
+```
+The test RMSE and MSE are similiar to the basic model as well and the R squared is low.
+
+
+##PROBLEM 2
+```{r}
+german.data <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/statlog/german/german.data-numeric" , sep = "", header = F, stringsAsFactors = T)
+german.data$V25[german.data$V25 == 1] <- 0
+german.data$V25[german.data$V25 == 2] <- 1
+```
+
+```{r}
+set.seed(1)
+train <- createDataPartition(german.data$V25, p = 0.8, list = FALSE)
+german.train <- german.data[train, ]
+german.test <- german.data[-train, ]
+
+log.fit <- glm(german.train$V25~., data = german.train, family = binomial)
+summary(log.fit)
+
+train.predict <- predict(log.fit, newdata = german.train, type ="response")
+
+cat("training MSE" , mse(german.train$V25, train.predict), "\n")
+cat("training RMSE" , rmse(german.train$V25, train.predict), "\n")
+cat("pseudo R^2", 1-log.fit$deviance/log.fit$null.deviance, "\n")
+
+test.predict <- predict(log.fit, newdata = german.test, type = "response")
+cat("test MSE" , mse(german.test$V25, test.predict), "\n")
+cat("test RMSE" , rmse(german.test$V25, test.predict), "\n")
+```
+
+Let`s keep only as significant predictors V1, V2, V3, V5, V9, V11, V12, V15, V16, V17, V18 and V19 since their p-values are lower than 0.05 and fit a new model.
+```{r}
+log.fit <- glm(german.train$V25~ V1+V2+V3+V5+V9+V11+V12+V15+V16+V17+V18+V19, data = german.train, family = binomial)
+summary(log.fit)
+
+train.predict <- predict(log.fit, newdata = german.train, type ="response")
+
+cat("training MSE" , mse(german.train$V25, train.predict), "\n")
+cat("training RMSE" , rmse(german.train$V25, train.predict), "\n")
+cat("pseudo R^2", 1-log.fit$deviance/log.fit$null.deviance, "\n")
+
+test.predict <- predict(log.fit, newdata = german.test, type = "response")
+
+cat("test MSE" , mse(german.test$V25, test.predict), "\n")
+cat("test RMSE" , rmse(german.test$V25, test.predict), "\n")
+```
+The values are very similar so considering we now have less predictors it is quite a good model in comparison.
+
+```{r}
+cv <- trainControl(method = "cv", number = 10)
+cv.fit <- train(factor(V25)~ V1+V2+V3+V5+V9+V11+V12+V15+V16+V17+V18+V19, data = german.train, trControl = cv, method = "glm")
+best.fit <- cv.fit$finalModel
+summary(best.fit)
+
+train.predict <- predict(best.fit, newdata = german.train, type ="response")
+
+cat("training MSE" , mse(german.train$V25, train.predict), "\n")
+cat("training RMSE" , rmse(german.train$V25, train.predict), "\n")
+cat("pseudo R^2", 1-log.fit$deviance/log.fit$null.deviance, "\n")
+
+test.predict <- predict(best.fit, newdata = german.test, type = "response")
+
+cat("test MSE" , mse(german.test$V25, test.predict), "\n")
+cat("test RMSE" , rmse(german.test$V25, test.predict), "\n")
+```
+The best model obtained from cross validation seems to be exactly the same as the previous one.
+
+##PROBLEM 3
+```{r}
+data("mtcars")
+cars <- mtcars
+cars$am <- as.factor(cars$am)
+set.seed(1)
+train <- createDataPartition(cars$mpg, p = 0.8, list = FALSE)
+cars.train <- cars[train, ]
+cars.test <- cars[-train, ]
+```
+
+```{r}
+linear.mod <- lm(cars.train$mpg~., data = cars.train)
+summary(linear.mod)
+```
+We could only consider the feature wt as significant if we used a p-value threshold of 0.1 which is a little bit high, we usually use 0.05. The associates coefficient is -4.69726.
+
+```{r}
+grid <- 10^seq(10, -2, length = 100)
+y.train <- cars.train$mpg
+x.train <- model.matrix(cars.train$mpg ~. , data = cars.train)[, -1]
+ridge.mod <- glmnet(x.train, y.train, alpha = 0, lambda = grid)
+
+cv.mod <- cv.glmnet(x.train, y.train, alpha = 0)
+best.lambda <- cv.mod$lambda.min
+cat("best lambda", best.lambda, "\n")
+plot(cv.mod)
+
+x.test <- model.matrix(cars.test$mpg ~. , data = cars.test)[, -1]
+ridge.pred <- predict(ridge.mod, s = best.lambda, newx = x.test)
+
+test.mse <- mse(cars.test$mpg, ridge.pred)
+cat("test MSE" , mse(cars.test$mpg, ridge.pred), "\n")
+
+
+ridge.mod <- glmnet(x.train, y.train, alpha = 0)
+coefs <- predict(ridge.mod, type = "coefficients", s = best.lambda)
+coefs
+```
+The best lambda is 2.877184.
+The test MSE is 12.47608.
+Most of the coefficients are smaller in absolute value.
+It performs shrinkage variable.
+
+##PROBLEM 4
+```{r}
+swiss <- data.frame(swiss)
+set.seed(1)
+train <- createDataPartition(swiss$Fertility, p = 0.8, list = FALSE)
+swiss.train <- swiss[train, ]
+swiss.test <- swiss[-train, ]
+```
+
+```{r}
+linear.mod <- lm(swiss.train$Fertility~., data = swiss.train)
+summary(linear.mod)
+```
+The relevant predictors are Education, Catholic and Infant Mortality.
+The coefficients are -0.71321, 0.09296 and 1.03237 repectively.
+
+```{r}
+grid <- 10^seq(10, -2, length = 100)
+y.train <- swiss.train$Fertility
+x.train <- model.matrix(swiss.train$Fertility ~. , data = swiss.train)[, -1]
+lasso.mod <- glmnet(x.train, y.train, alpha = 1, lambda = grid)
+
+cv.mod <- cv.glmnet(x.train, y.train, alpha = 1)
+best.lambda <- cv.mod$lambda.min
+cat("best lambda", best.lambda, "\n")
+plot(cv.mod)
+
+x.test <- model.matrix(swiss.test$Fertility ~. , data = swiss.test)[, -1]
+lasso.pred <- predict(lasso.mod, s = best.lambda, newx = x.test)
+
+cat("test MSE" , mse(swiss.test$Fertility, lasso.pred), "\n")
+
+ridge.mod <- glmnet(x.train, y.train, alpha = 1)
+coefs <- predict(ridge.mod, type = "coefficients", s = best.lambda)
+coefs
+```
+The best lamda is 0.0296829.
+The test MSE is 37.67833
+The coefficients are very similiar to the previous ones.
